@@ -25,6 +25,15 @@ public class Game extends StateBasedGame {
         this.addState(new Play(play));
     }
 
+    /**
+     *
+     * Initializes the different "pages" of the game.
+     *
+     * @param gc The GameContainer, a specific class to contain much of nuts and
+     * bolts involved.
+     * @throws SlickException A specific series of OpenGL errors when rendering
+     * may fail.
+     */
     @Override
     public void initStatesList(GameContainer gc) throws SlickException {
         this.getState(menu).init(gc, this);
@@ -32,6 +41,12 @@ public class Game extends StateBasedGame {
         this.enterState(menu);
     }
 
+    /**
+     *
+     * The main method to actually drive this game and all associated loops.
+     *
+     * @param args Command-line arguments, useless here.
+     */
     public static void main(String[] args) {
         try {
             AppGameContainer appgc = new AppGameContainer(new Game());

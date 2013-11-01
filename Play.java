@@ -68,6 +68,15 @@ public class Play extends BasicGameState {
     Play(int state) {
     }
 
+    /**
+     *
+     * Initializes variables and other bits of data while this page loads but
+     * before its loops start to run.
+     *
+     * @param gc The GameContainer for the entire program.
+     * @param sbg A more specific object for swapping between pages.
+     * @throws SlickException A specific flavor of OpenGL exception.
+     */
     @Override
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
         clean = new Image("data/yellow.png"); //0
@@ -98,6 +107,7 @@ public class Play extends BasicGameState {
         selection.addFrame(selectionSheet.getSprite(0, 0), 650);
         selection.addFrame(selectionSheet.getSprite(1, 0), 650);
 
+        //Button for barriers.
         barrier = new BuildButton(gc, selection, 650, gc.getHeight() - 175, sbg, 1);
         buttons.add(barrier);
         barrier.add(new ButtonAction() {
@@ -108,6 +118,7 @@ public class Play extends BasicGameState {
             }
         });
 
+        //Button for nukes.
         nuke = new BuildButton(gc, selection, 650, gc.getHeight() - 275, sbg, 1);
         buttons.add(nuke);
         nuke.add(new ButtonAction() {
@@ -118,6 +129,7 @@ public class Play extends BasicGameState {
             }
         });
 
+        //Button for military.
         military = new BuildButton(gc, selection, 650, gc.getHeight() - 225, sbg, 1);
         buttons.add(military);
         military.add(new ButtonAction() {
@@ -129,9 +141,21 @@ public class Play extends BasicGameState {
         });
     }
 
+    /**
+     *
+     * The render loop, responsible for taking things and putting them on the
+     * screen.
+     *
+     * @param gc The GameContainer for the entire program.
+     * @param sbg A more specific object for swapping between pages.
+     * @param g The Graphic object, used to actually draw things.
+     * @throws SlickException A specific flavor of OpenGL exception.
+     */
     @Override
     public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
         if (start == 0) {
+
+            //Draw instructions on first load
             g.drawImage(intro, 0, 0);
             g.drawRect(900, 280, 40, 20);
             g.drawString("Go!", 910, 285);
@@ -139,11 +163,13 @@ public class Play extends BasicGameState {
             if (opacity != 0
                     || opacity1 != 0
                     || opacity2 != 0) {
+
                 //Render the win/lose screen
                 g.drawImage(vaccine, 0, 0, new Color(255, 255, 255, opacity));
                 g.drawImage(infection, 0, 0, new Color(255, 255, 255, opacity1));
                 g.drawImage(armywin, 0, 0, new Color(255, 255, 255, opacity2));
             } else {
+
                 //Render buttons and things that don't change. 
                 g.drawRect((float) button.getX(), (float) button.getY(), (float) button.getWidth(), (float) button.getHeight());
                 g.drawString(advanceMessage, 656, 258);
@@ -201,8 +227,20 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     *
+     * The update loop, run just as frequently as the rendering one, but used
+     * instead to drive forward game logic.
+     *
+     * @param gc The GameContainer for the entire program.
+     * @param sbg A more specific object for swapping between pages.
+     * @param delta The time between updates, this matches the frame rate of the
+     * renderer.
+     * @throws SlickException A specific flavor of OpenGL exception.
+     */
     @Override
     public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException {
+
         //Dynamic music volume
         if (oscillation != null) {
             oscillation.setVolume(0.5F / volume);
@@ -211,20 +249,22 @@ public class Play extends BasicGameState {
         //Win/loss conditions.
         if (turn > 100 && !debuff2) {//Time victory, made it to vaccine.
             debuff2 = true;
-            endGame(0, sbg);
+            endGame(0);
         } else {
             if (background.search(1).size() == background.getHeight() * background.getWidth() && debuff2 == false) { //Lost, overran.
                 debuff2 = true;
-                endGame(1, sbg);
+                endGame(1);
             }
             if (background.search(1).isEmpty() && debuff2 == false && turn != 0) { //The infection was eradicated.
                 debuff2 = true;
-                endGame(2, sbg);
+                endGame(2);
             }
         }
 
+        //Recording mouse coordinates
         xpos = Mouse.getX();
         ypos = Mouse.getY();
+
         //If the mouse is clicked.
         if (Mouse.isButtonDown(0)
                 && !debuff) {
@@ -233,22 +273,23 @@ public class Play extends BasicGameState {
                     && ypos < gc.getHeight() - 280
                     && ypos > gc.getHeight() - 300
                     && start == 0) {
+                //If the instructions are done being read.
                 start++;
                 oscillation = new Music("data/oscillation.ogg");
                 oscillation.loop();
             }
+            //Prevent a stream of clicks
             debuff = true;
-            System.out.println(selected);
+
             //If the progress turn button got clicked.
             if (xpos > 640
                     && ypos > gc.getHeight() - 250 - 32
                     && xpos < 840
                     && ypos < gc.getHeight() - 250) {
                 //Button clicked, begin game/advance time.
-                System.out.println(turn);
-
                 //If it's the first turn, simply create the first infected area.
                 if (turn == 0) {
+                    //Randomly infect a tile
                     int seedX = random.nextInt(background.getWidth());
                     int seedY = random.nextInt(background.getHeight());
                     background.setTile(seedX, seedY, 1);
@@ -259,6 +300,7 @@ public class Play extends BasicGameState {
             } else { //If anything not the next turn button got clicked.
                 //If we're in the management side of things.
                 if (xpos > 640) {
+                    //If we didn't click on a button
                     int strikes = 0;
                     for (BuildButton b : buttons) {
                         if (!b.isMouseOver()) {
@@ -319,6 +361,8 @@ public class Play extends BasicGameState {
                 }
             }
         }
+
+        //Debuffering stipulations
         if (!Mouse.isButtonDown(0)) {
             debuff = false;
             advanceMessage = "Proceed to Next Day";
@@ -326,11 +370,20 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     *
+     * The method to return the ID of this page of the program.
+     *
+     * @return 1, this is the play state.
+     */
     @Override
     public int getID() {
         return 1;
     }
 
+    /**
+     * Method to facilitate the spread of the infection
+     */
     private void spread() {
         ArrayList<Vector2> infectedList = background.search(1);
         for (Vector2 i : infectedList) {
@@ -388,6 +441,9 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     * Method to infect all airports when one falls.
+     */
     private void infectAirports() {
         for (int i = 0; i < airports.getWidth(); ++i) {
             for (int j = 0; j < airports.getHeight(); ++j) {
@@ -400,6 +456,9 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     * Method to randomly place some airports on the map when it begins.
+     */
     private void placeAirports() {
         int aiportCount = 0;
         while (aiportCount < 3) {
@@ -417,6 +476,9 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     * Method to move the game forward one turn.
+     */
     private void takeTurn() {
         if (turn > 4) {
             resourceCredits += (random.nextInt(10) / difficulty) * ((background.getHeight() * background.getWidth()) - (background.search(1).size() + background.search(4).size()));
@@ -429,6 +491,9 @@ public class Play extends BasicGameState {
         selected = -1;
     }
 
+    /**
+     * Method to damage bases that are actively resisting the zombies
+     */
     private void updateBases() {
         for (int i = 0; i < bases.getWidth(); ++i) {
             for (int j = 0; j < bases.getHeight(); ++j) {
@@ -440,6 +505,13 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     *
+     * Method to nuke an area and wipe away everything affected.
+     *
+     * @param x The x coordinate of the tile to center the blast on.
+     * @param y The y coordinate of the tile to center the blast on.
+     */
     private void nuke(int x, int y) {
         background.setTile(x, y, 4);
         bases.setTile(x, y, 0);
@@ -485,12 +557,21 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     * Deselect all buttons for resources.
+     */
     private void clearButtons() {
         for (BuildButton b : buttons) {
             b.setActivated(false);
         }
     }
 
+    /**
+     *
+     * Deselect all buttons excluding the one specified.
+     *
+     * @param b The button to not deselect.
+     */
     private void clearButtons(BuildButton b) {
         for (BuildButton bT : buttons) {
             if (!bT.equals(b)) {
@@ -499,6 +580,9 @@ public class Play extends BasicGameState {
         }
     }
 
+    /**
+     * Warn the player that their resources are insufficient
+     */
     private void flickerResources() {
         warning = 1;
         Timer timer = new Timer();
@@ -511,7 +595,13 @@ public class Play extends BasicGameState {
         timer.schedule(task, 3000);
     }
 
-    private void endGame(int i, final StateBasedGame sbg) {
+    /**
+     *
+     * End the game and display one of three possible screens.
+     *
+     * @param i The integer ID of one of the three endings
+     */
+    private void endGame(int i) {
         if (i == 0) {
             //Discovered vaccine
             index = 0;
